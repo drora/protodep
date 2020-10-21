@@ -26,6 +26,7 @@ _testmain.go
 vendor/
 bin/
 .idea/
+.DS_Store
 
 protodep.lock
 artifacts/

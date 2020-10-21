@@ -25,12 +25,14 @@ import (
 var RootCmd = &cobra.Command{
 	Use:   "protodep",
 	Short: "Manage vendor for Protocol Buffer IDL file (.proto)",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long: `
+	protodep allows us to define a TOML configuration file with all the dependencies a service needs.
+	This can be 3rd party proto modules or another internal service or message it needs.
+	Protodep will parse the TOML file and download all the dependencies to configured sub directory.
+	
+	Recommendation: commit protodep.toml and protodep.lock files only to your source control.
+	The protodep directory which contains the downloaded assets should not be committed into source control (just as you wouldn’t normally commit node_modules).
+	Only exception is in cases where you would like to extend or override specific imported assets, in this case, those extended assets should be commited as well.`,
 }
 
 func Execute() {
