@@ -5,8 +5,9 @@ import (
 )
 
 type ProtoDep struct {
-	ProtoOutdir  string               `toml:"proto_outdir"`
-	Dependencies []ProtoDepDependency `toml:"dependencies"`
+	ProtoOutdir     string               `toml:"proto_outdir"`
+	PatchAnnotation string               `toml:"patch_package_with_message_annotation"`
+	Dependencies    []ProtoDepDependency `toml:"dependencies"`
 }
 
 type ProtoDepDependency struct {

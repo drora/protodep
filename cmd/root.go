@@ -25,14 +25,21 @@ import (
 var RootCmd = &cobra.Command{
 	Use:   "protodep",
 	Short: "Manage vendor for Protocol Buffer IDL file (.proto)",
-	Long: `
-	protodep allows us to define a TOML configuration file with all the dependencies a service needs.
-	This can be 3rd party proto modules or another internal service or message it needs.
+	Long:
+`
+	protodep allows us to define a TOML configuration file with all the protobuf related dependencies a service needs.
+	This can be any 3rd party proto module or other internal service or message.
 	Protodep will parse the TOML file and download all the dependencies to configured sub directory.
 	
 	Recommendation: commit protodep.toml and protodep.lock files only to your source control.
 	The protodep directory which contains the downloaded assets should not be committed into source control (just as you wouldn’t normally commit node_modules).
-	Only exception is in cases where you would like to extend or override specific imported assets, in this case, those extended assets should be commited as well.`,
+	Only exception is in cases where you would like to extend or override specific imported assets, in this case, those extended assets should be commited as well.
+
+	(EXPERIMENTAL)
+	protodep can automatically patch package names for you according to it's new location once it's imported.
+	to opt-in add this line to your protodep.toml root:
+	'patch_package_with_message_annotation = ".some.message.annotation"'
+`,
 }
 
 func Execute() {
