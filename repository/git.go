@@ -101,7 +101,11 @@ func (r *GitHubRepository) Open() (*OpenedRepository, error) {
 	if revision == "" {
 		target, err := rep.Storer.Reference(plumbing.ReferenceName(fmt.Sprintf("refs/remotes/origin/%s", branch)))
 		if err != nil {
-			return nil, errors.Wrapf(err, "change branch to %s is failed", branch)
+			// retry: fallback to tags
+			target, err = rep.Storer.Reference(plumbing.ReferenceName(fmt.Sprintf("refs/tags/%s", branch)))
+			if err != nil {
+				return nil, errors.Wrapf(err, "change branch or tag to %s is failed", branch)
+			}
 		}
 
 		if err := wt.Checkout(&git.CheckoutOptions{Hash: target.Hash()}); err != nil {

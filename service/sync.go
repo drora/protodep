@@ -109,7 +109,9 @@ func (s *SyncImpl) Resolve(forceUpdate bool, cleanupCache bool) error {
 				return err
 			}
 
-			content = patchProtoFile(content, filepath.Join(protodep.ProtoOutdir, dep.Path, s.relativeDest), protodep.PatchAnnotation)
+			if len(protodep.PatchAnnotation) > 0 {
+				content = patchProtoFile(content, filepath.Join(protodep.ProtoOutdir, dep.Path, s.relativeDest), protodep.PatchAnnotation)
+			}
 			if err := helper.WriteFileWithDirectory(outpath, content, 0644); err != nil {
 				return err
 			}
