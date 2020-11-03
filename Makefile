@@ -11,7 +11,7 @@ GOARCH := $(shell go env GOARCH)
 GOOS := $(shell go env GOOS)
 
 build: tidy vendor
-		GO111MODULE=on GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-w -s" -o bin/protodep -mod=vendor main.go
+		GO111MODULE=on GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-w -s" -gcflags="all=-N -l" -o bin/protodep -mod=vendor main.go
 
 define build-artifact
 		GO111MODULE=on GOOS=$(1) GOARCH=$(2) go build -ldflags="-w -s" -o artifacts/$(3) -mod=vendor main.go

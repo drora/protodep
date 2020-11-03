@@ -3,9 +3,9 @@ package helper
 import (
 	"fmt"
 
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/stormcat24/protodep/logger"
-	"gopkg.in/src-d/go-git.v4/plumbing/transport"
-	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 )
 
 type AuthProvider interface {
