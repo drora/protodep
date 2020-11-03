@@ -109,7 +109,7 @@ func (r *GitHubRepository) Open() (*OpenedRepository, error) {
 		}
 
 		if err := wt.Checkout(&git.CheckoutOptions{Hash: target.Hash()}); err != nil {
-			return nil, errors.Wrapf(err, "checkout to %s is failed", revision)
+			return nil, errors.Wrapf(err, "checkout to %s is failed", branch)
 		}
 
 		head := plumbing.NewHashReference(plumbing.HEAD, target.Hash())
