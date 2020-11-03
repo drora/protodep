@@ -148,6 +148,7 @@ func patchProtoFile(content []byte, filepath string, messageAnnotation string) [
 		javaPackageLinePrefix := "option java_package"
 		packageLinePrefix := "package "
 		messageLinePrefix := "message "
+		javaClassPrefix := "com."
 		originalPackage := ""
 		totalMessages := 0
 		path := strings.Split(filepath, dirSeparator)
@@ -156,11 +157,15 @@ func patchProtoFile(content []byte, filepath string, messageAnnotation string) [
 		lines := strings.Split(string(content), lineSeparator)
 		// patch package, remember original, count messages
 		for i, line := range lines {
+			relativePath := strings.ReplaceAll(formattedPath, dirSeparator, packageSeparator)
 			if strings.HasPrefix(strings.TrimSpace(line), packageLinePrefix) {
 				originalPackage = eliminateCharIfNeeded(line, ";")
-				lines[i] = fmt.Sprintf("%s%s;", packageLinePrefix, strings.ReplaceAll(formattedPath, dirSeparator, packageSeparator))
+				lines[i] = fmt.Sprintf("%s%s;", packageLinePrefix, relativePath)
 			} else if strings.HasPrefix(strings.TrimSpace(line), javaPackageLinePrefix) {
-				lines[i] = fmt.Sprintf("%s = \"com.%s\";", javaPackageLinePrefix, strings.ReplaceAll(formattedPath, dirSeparator, packageSeparator))
+				if !(strings.HasPrefix(relativePath, javaClassPrefix)) {
+					relativePath = javaClassPrefix + relativePath
+				}
+				lines[i] = fmt.Sprintf("%s = \"%s\";", javaPackageLinePrefix, relativePath)
 			} else if strings.HasPrefix(strings.TrimSpace(line), messageLinePrefix) {
 				totalMessages++
 			}
