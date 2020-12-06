@@ -52,6 +52,28 @@ var upCmd = &cobra.Command{
 			logger.Info("password = %s", strings.Repeat("x", len(password))) // Do not display the password.
 		}
 
+		useHttps, err := cmd.Flags().GetBool("use-https")
+		if err != nil {
+			return err
+		}
+		logger.Info("use https = %t", useHttps)
+
+		basicAuthUsername, err := cmd.Flags().GetString("basic-auth-username")
+		if err != nil {
+			return err
+		}
+		if basicAuthUsername != "" {
+			logger.Info("https basic auth username = %s", basicAuthUsername)
+		}
+
+		basicAuthPassword, err := cmd.Flags().GetString("basic-auth-password")
+		if err != nil {
+			return err
+		}
+		if basicAuthPassword != "" {
+			logger.Info("https basic auth password = %s", strings.Repeat("x", len(basicAuthPassword))) // Do not display the password.
+		}
+
 		pwd, err := os.Getwd()
 		if err != nil {
 			return err
@@ -62,15 +84,24 @@ var upCmd = &cobra.Command{
 			return err
 		}
 
-		identifyPath := filepath.Join(homeDir, ".ssh", identityFile)
-		isSSH, err := helper.IsAvailableSSH(identifyPath)
-		if err != nil {
-			return err
-		}
-		if isSSH {
-			authProvider = helper.NewAuthProvider(identifyPath, password)
+		if useHttps {
+			authProvider = helper.NewAuthProvider(helper.WithHTTPS(basicAuthUsername, basicAuthPassword))
 		} else {
-			authProvider = helper.NewAuthProvider("", "")
+			if identityFile == "" && password == "" {
+				authProvider = helper.NewAuthProvider()
+			} else {
+				identifyPath := filepath.Join(homeDir, ".ssh", identityFile)
+				isSSH, err := helper.IsAvailableSSH(identifyPath)
+				if err != nil {
+					return err
+				}
+				if isSSH {
+					authProvider = helper.NewAuthProvider(helper.WithPemFile(identifyPath, password))
+				} else {
+					logger.Warn("The identity file path has been passed but is not available. Falling back to ssh-agent, the default authentication method.")
+					authProvider = helper.NewAuthProvider()
+				}
+			}
 		}
 
 		updateService := service.NewSync(authProvider, homeDir, pwd, pwd)
@@ -80,7 +111,10 @@ var upCmd = &cobra.Command{
 
 func initDepCmd() {
 	upCmd.PersistentFlags().BoolP("force", "f", false, "update locked file and .proto vendors")
-	upCmd.PersistentFlags().StringP("identity-file", "i", "id_rsa", "set the identity file for SSH")
+	upCmd.PersistentFlags().StringP("identity-file", "i", "", "set the identity file for SSH")
 	upCmd.PersistentFlags().StringP("password", "p", "", "set the password for SSH")
 	upCmd.PersistentFlags().BoolP("cleanup", "c", false, "cleanup cache before exec.")
+	upCmd.PersistentFlags().BoolP("use-https", "u", false, "use HTTPS to get dependencies.")
+	upCmd.PersistentFlags().StringP("basic-auth-username", "", "", "set the username with Basic Auth via HTTPS")
+	upCmd.PersistentFlags().StringP("basic-auth-password", "", "", "set the password or personal access token(when enabled 2FA) with Basic Auth via HTTPS")
 }
