@@ -84,7 +84,7 @@ func (s *SyncImpl) Resolve(forceUpdate bool, cleanupCache bool) error {
 		compiledIgnores := compileIngoresToGlob(dep.Ignores)
 
 		protoRootDir := gitrepo.ProtoRootDir()
-		filepath.Walk(protoRootDir, func(path string, info os.FileInfo, err error) error {
+		err = filepath.Walk(protoRootDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
@@ -100,6 +100,9 @@ func (s *SyncImpl) Resolve(forceUpdate bool, cleanupCache bool) error {
 			}
 			return nil
 		})
+		if err != nil {
+			return err
+		}
 
 		for _, s := range sources {
 			outpath := filepath.Join(outdir, dep.Path, s.relativeDest)
