@@ -43,7 +43,7 @@ func TestSync(t *testing.T) {
 
 	target := NewSync(authProviderMock, dotProtoDir, pwd, outputRootDir)
 	// clone
-	err = target.Resolve(false, false)
+	err = target.Resolve(false, false, true)
 	require.NoError(t, err)
 
 	if !isFileExist(filepath.Join(outputRootDir, "proto/stream.proto")) {
@@ -75,7 +75,7 @@ func TestSync(t *testing.T) {
 	}
 
 	// fetch
-	err = target.Resolve(false, false)
+	err = target.Resolve(false, false, true)
 	require.NoError(t, err)
 }
 

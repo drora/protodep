@@ -20,7 +20,7 @@ type protoResource struct {
 }
 
 type Sync interface {
-	Resolve(forceUpdate bool, cleanupCache bool) error
+	Resolve(forceUpdate bool, cleanupCache bool, overwrite bool) error
 }
 
 type SyncImpl struct {
@@ -39,7 +39,7 @@ func NewSync(authProvider helper.AuthProvider, userHomeDir string, targetDir str
 	}
 }
 
-func (s *SyncImpl) Resolve(forceUpdate bool, cleanupCache bool) error {
+func (s *SyncImpl) Resolve(forceUpdate bool, cleanupCache bool, overwrite bool) error {
 
 	dep := dependency.NewDependency(s.targetDir, forceUpdate)
 	protodep, err := dep.Load()
@@ -67,7 +67,8 @@ func (s *SyncImpl) Resolve(forceUpdate bool, cleanupCache bool) error {
 	}
 
 	outdir := filepath.Join(s.outputRootDir, protodep.ProtoOutdir)
-	if err := os.RemoveAll(outdir); err != nil {
+
+	if err := cleanup(outdir, protodep.Dependencies, forceUpdate, overwrite); err != nil {
 		return err
 	}
 
@@ -106,17 +107,21 @@ func (s *SyncImpl) Resolve(forceUpdate bool, cleanupCache bool) error {
 
 		for _, s := range sources {
 			outpath := filepath.Join(outdir, dep.Path, s.relativeDest)
+			_, statErr := os.Stat(outpath)
+			if statErr != nil {
+				content, err := ioutil.ReadFile(s.source)
+				if err != nil {
+					return err
+				}
 
-			content, err := ioutil.ReadFile(s.source)
-			if err != nil {
-				return err
-			}
-
-			if len(protodep.PatchAnnotation) > 0 {
-				content = patchProtoFile(content, filepath.Join(protodep.ProtoOutdir, dep.Path, s.relativeDest), protodep.PatchAnnotation)
-			}
-			if err := helper.WriteFileWithDirectory(outpath, content, 0644); err != nil {
-				return err
+				if len(protodep.PatchAnnotation) > 0 {
+					content = patchProtoFile(content, filepath.Join(protodep.ProtoOutdir, dep.Path, s.relativeDest), protodep.PatchAnnotation)
+				}
+				if err := helper.WriteFileWithDirectory(outpath, content, 0644); err != nil {
+					return err
+				}
+			} else {
+				logger.Info("skipped %s - already exists", outpath)
 			}
 		}
 
@@ -140,6 +145,34 @@ func (s *SyncImpl) Resolve(forceUpdate bool, cleanupCache bool) error {
 		}
 	}
 
+	return nil
+}
+
+func cleanup(outdir string, dependencies []dependency.ProtoDepDependency, forceUpdate bool, overwrite bool) error {
+	allDepsHasDefinedPath := true
+	for _, dep := range dependencies {
+		if dep.Path == "" {
+			allDepsHasDefinedPath = false
+			break
+		}
+	}
+
+	if allDepsHasDefinedPath {
+		for _, dep := range dependencies {
+			pathdir := filepath.Join(outdir, dep.Path)
+			if forceUpdate || overwrite {
+				if err := os.RemoveAll(pathdir); err != nil {
+					if err := os.Remove(pathdir); err != nil {
+						return err
+					}
+				}
+			}
+		}
+	} else {
+		if err := os.RemoveAll(outdir); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
