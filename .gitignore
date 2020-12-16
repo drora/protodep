@@ -29,6 +29,8 @@ bin/
 .idea/
 .DS_Store
 
+.tag.json
+
 protodep.lock
 artifacts/
 proto/
