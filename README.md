@@ -19,12 +19,6 @@ If you manage proto files in a git repository, what will you do? Most remote ser
 
 ## Install
 
-### go get
-
-```bash
-$ go get github.com/stormcat24/protodep
-```
-
 ### from binary
 
 Support as follows:
@@ -36,9 +30,15 @@ Support as follows:
 * protodep_linux_arm64.tar.gz
 
 ```bash
-$ wget https://github.com/drora/protodep/releases/download/0.9.2/protodep_darwin_amd64.tar.gz
-$ tar -xf protodep_darwin_amd64.tar.gz
-$ mv protodep /usr/local/bin/
+wget https://github.com/drora/protodep/releases/download/0.9.3/protodep_darwin_amd64.tar.gz
+tar -xf protodep_darwin_amd64.tar.gz
+mv protodep /usr/local/bin/
+```
+
+### go get
+
+```bash
+go get github.com/stormcat24/protodep
 ```
 
 ## Usage
@@ -71,7 +71,7 @@ proto_outdir = "./proto"
 In same directory, execute this command.
 
 ```bash
-$ protodep up
+protodep up
 ```
 
 If succeeded, `protodep.lock` is generated.
@@ -81,7 +81,7 @@ If succeeded, `protodep.lock` is generated.
 Even if protodep.lock exists, you can force update dependenies.
 
 ```bash
-$ protodep up -f
+protodep up -f
 ```
 
 ### [Attention] Changes from 0.1.0
@@ -92,8 +92,8 @@ In other words, in order to operate protodep without options as before, it is ne
 As the follows:
 
 ```bash
-$ ssh-add ~/.ssh/id_rsa
-$ protodep up
+ssh-add ~/.ssh/id_rsa
+protodep up
 ```
 
 ### Getting via HTTPS
@@ -101,14 +101,14 @@ $ protodep up
 If you want to get it via HTTPS, do as follows.
 
 ```bash
-$ protodep up --use-https
+protodep up --use-https
 ```
 
 And also, if Basic authentication is required, do as follows.
 If you have 2FA enabled, specify the Personal Access Token as the password. 
 
 ```bash
-$ protodep up --use-https \
+protodep up --use-https \
     --basic-auth-username=your-github-username \
     --basic-auth-password=your-github-password
 ```

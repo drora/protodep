@@ -125,11 +125,11 @@ func (r *GitHubRepository) Open() (*OpenedRepository, error) {
 		} else {
 			if err != nil {
 				// Tag not found, revision must be a hash
-				logger.Info("%s is not a tag, checking out by hash", revision)
+				logger.Info("checking out hash: %s", revision)
 				hash := plumbing.NewHash(revision)
 				opts = git.CheckoutOptions{Hash: hash}
 			} else {
-				logger.Info("%s is a tag, checking out by tag", revision)
+				logger.Info("checking out tag: %s", revision)
 				opts = git.CheckoutOptions{Branch: tag}
 			}
 		}

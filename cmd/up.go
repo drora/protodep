@@ -96,7 +96,7 @@ var upCmd = &cobra.Command{
 			return err
 		}
 
-		return updateService.Resolve(isForceUpdate, isCleanupCache)
+		return updateService.Resolve(isForceUpdate, isCleanupCache, isOverwrite)
 	},
 }
 
