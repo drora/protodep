@@ -20,7 +20,7 @@ type protoResource struct {
 }
 
 type Sync interface {
-	Resolve(forceUpdate bool, cleanupCache bool, overwrite bool) error
+	Resolve(forceUpdate bool, cleanupCache bool) error
 
 	SetHttpsAuthProvider(provider helper.AuthProvider)
 	SetSshAuthProvider(provider helper.AuthProvider)
@@ -46,7 +46,7 @@ func NewSync(conf *helper.SyncConfig) (Sync, error) {
 	return s, nil
 }
 
-func (s *SyncImpl) Resolve(forceUpdate bool, cleanupCache bool, overwrite bool) error {
+func (s *SyncImpl) Resolve(forceUpdate bool, cleanupCache bool) error {
 
 	dep := dependency.NewDependency(s.conf.TargetDir, forceUpdate)
 	protodep, err := dep.Load()
@@ -74,7 +74,7 @@ func (s *SyncImpl) Resolve(forceUpdate bool, cleanupCache bool, overwrite bool) 
 	}
 
 	outdir := filepath.Join(s.conf.OutputDir, protodep.ProtoOutdir)
-	if err := cleanup(outdir, protodep.Dependencies, forceUpdate, overwrite); err != nil {
+	if err := os.RemoveAll(outdir); err != nil {
 		return err
 	}
 
@@ -153,6 +153,7 @@ func (s *SyncImpl) Resolve(forceUpdate bool, cleanupCache bool, overwrite bool) 
 			Path:     repo.Dep.Path,
 			Ignores:  repo.Dep.Ignores,
 			Protocol: repo.Dep.Protocol,
+			Subgroup: repo.Dep.Subgroup,
 		})
 	}
 
@@ -200,34 +201,6 @@ func (s *SyncImpl) initAuthProviders() error {
 		s.sshProvider = helper.NewAuthProvider()
 	}
 
-	return nil
-}
-
-func cleanup(outdir string, dependencies []dependency.ProtoDepDependency, forceUpdate bool, overwrite bool) error {
-	allDepsHasDefinedPath := true
-	for _, dep := range dependencies {
-		if dep.Path == "" {
-			allDepsHasDefinedPath = false
-			break
-		}
-	}
-
-	if allDepsHasDefinedPath {
-		for _, dep := range dependencies {
-			pathdir := filepath.Join(outdir, dep.Path)
-			if forceUpdate || overwrite {
-				if err := os.RemoveAll(pathdir); err != nil {
-					if err := os.Remove(pathdir); err != nil {
-						return err
-					}
-				}
-			}
-		}
-	} else {
-		if err := os.RemoveAll(outdir); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 

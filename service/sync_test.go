@@ -57,7 +57,7 @@ func TestSync(t *testing.T) {
 	target.SetSshAuthProvider(sshAuthProviderMock)
 
 	// clone
-	err = target.Resolve(false, false, true)
+	err = target.Resolve(false, false)
 	require.NoError(t, err)
 
 	if !isFileExist(filepath.Join(outputRootDir, "proto/stream.proto")) {
@@ -89,7 +89,7 @@ func TestSync(t *testing.T) {
 	}
 
 	// fetch
-	err = target.Resolve(false, false, true)
+	err = target.Resolve(false, false)
 	require.NoError(t, err)
 }
 

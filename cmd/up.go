@@ -22,12 +22,6 @@ var upCmd = &cobra.Command{
 		}
 		logger.Info("force update = %t", isForceUpdate)
 
-		isOverwrite, err := cmd.Flags().GetBool("overwrite")
-		if err != nil {
-			return err
-		}
-		logger.Info("overwrite existing = %t", isOverwrite)
-
 		isCleanupCache, err := cmd.Flags().GetBool("cleanup")
 		if err != nil {
 			return err
@@ -96,17 +90,16 @@ var upCmd = &cobra.Command{
 			return err
 		}
 
-		return updateService.Resolve(isForceUpdate, isCleanupCache, isOverwrite)
+		return updateService.Resolve(isForceUpdate, isCleanupCache)
 	},
 }
 
 func initDepCmd() {
 	upCmd.PersistentFlags().BoolP("force", "f", false, "update locked file and .proto vendors")
-	upCmd.PersistentFlags().BoolP("overwrite", "o", false, "overwrite existing files")
 	upCmd.PersistentFlags().StringP("identity-file", "i", "", "set the identity file for SSH")
 	upCmd.PersistentFlags().StringP("password", "p", "", "set the password for SSH")
-	upCmd.PersistentFlags().BoolP("cleanup", "c", false, "cleanup cache before exec")
-	upCmd.PersistentFlags().BoolP("use-https", "u", false, "use HTTPS to get dependencies")
+	upCmd.PersistentFlags().BoolP("cleanup", "c", false, "cleanup cache before exec.")
+	upCmd.PersistentFlags().BoolP("use-https", "u", false, "use HTTPS to get dependencies.")
 	upCmd.PersistentFlags().StringP("basic-auth-username", "", "", "set the username with Basic Auth via HTTPS")
 	upCmd.PersistentFlags().StringP("basic-auth-password", "", "", "set the password or personal access token(when enabled 2FA) with Basic Auth via HTTPS")
 }

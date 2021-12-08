@@ -2,14 +2,16 @@ package repository
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/pkg/errors"
+
 	"github.com/stormcat24/protodep/dependency"
 	"github.com/stormcat24/protodep/helper"
 	"github.com/stormcat24/protodep/logger"
-	"os"
-	"path/filepath"
 )
 
 type GitRepository interface {
@@ -98,17 +100,13 @@ func (r *GitHubRepository) Open() (*OpenedRepository, error) {
 	}
 
 	if revision == "" {
-		target, err := rep.Storer.Reference(plumbing.ReferenceName(fmt.Sprintf("refs/remotes/origin/%s", branch)))
+		target, err := r.resolveReference(rep, branch)
 		if err != nil {
-			// retry: fallback to tags
-			target, err = rep.Storer.Reference(plumbing.ReferenceName(fmt.Sprintf("refs/tags/%s", branch)))
-			if err != nil {
-				return nil, errors.Wrapf(err, "change branch or tag to %s is failed", branch)
-			}
+			return nil, errors.Wrapf(err, "change branch to %s is failed", branch)
 		}
 
 		if err := wt.Checkout(&git.CheckoutOptions{Hash: target.Hash()}); err != nil {
-			return nil, errors.Wrapf(err, "checkout to %s is failed", branch)
+			return nil, errors.Wrapf(err, "checkout to %s is failed", revision)
 		}
 
 		head := plumbing.NewHashReference(plumbing.HEAD, target.Hash())
@@ -125,11 +123,11 @@ func (r *GitHubRepository) Open() (*OpenedRepository, error) {
 		} else {
 			if err != nil {
 				// Tag not found, revision must be a hash
-				logger.Info("checking out hash: %s", revision)
+				logger.Info("%s is not a tag, checking out by hash", revision)
 				hash := plumbing.NewHash(revision)
 				opts = git.CheckoutOptions{Hash: hash}
 			} else {
-				logger.Info("checking out tag: %s", revision)
+				logger.Info("%s is a tag, checking out by tag", revision)
 				opts = git.CheckoutOptions{Branch: tag}
 			}
 		}
@@ -158,4 +156,23 @@ func (r *GitHubRepository) Open() (*OpenedRepository, error) {
 
 func (r *GitHubRepository) ProtoRootDir() string {
 	return filepath.Join(r.protodepDir, r.dep.Target)
+}
+
+func (r *GitHubRepository) resolveReference(rep *git.Repository, branch string) (*plumbing.Reference, error) {
+	if branch != "master" {
+		return r.getReference(rep, branch)
+	}
+	// If master branch is failed, try main branch.
+	target, err := r.getReference(rep, branch)
+	if err == plumbing.ErrReferenceNotFound {
+		return r.getReference(rep, "main")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return target, nil
+}
+
+func (r *GitHubRepository) getReference(rep *git.Repository, branch string) (*plumbing.Reference, error) {
+	return rep.Storer.Reference(plumbing.ReferenceName(fmt.Sprintf("refs/remotes/origin/%s", branch)))
 }

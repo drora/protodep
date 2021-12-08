@@ -1,4 +1,4 @@
-ROOT_PACKAGE := github.com/stormcat24/protodep
+ROOT_PACKAGE := github.com/drora/protodep
 VERSION_PACKAGE := $(ROOT_PACKAGE)/version
 LDFLAG_GIT_COMMIT := "$(VERSION_PACKAGE).gitCommit"
 LDFLAG_GIT_COMMIT_FULL := "$(VERSION_PACKAGE).gitCommitFull"
@@ -22,7 +22,7 @@ build: tidy vendor version
 		$(eval GIT_COMMIT_FULL := $(shell git rev-parse HEAD))
 		$(eval BUILD_DATE := $(shell date '+%Y%m%d'))
 		GO111MODULE=on GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-w -s -X $(LDFLAG_GIT_COMMIT)=$(GIT_COMMIT) -X $(LDFLAG_GIT_COMMIT_FULL)=$(GIT_COMMIT_FULL) -X $(LDFLAG_BUILD_DATE)=$(BUILD_DATE) -X $(LDFLAG_VERSION)=$(GIT_COMMIT)" \
-			-gcflags="all=-N -l" -o bin/protodep -mod=vendor main.go
+			-o bin/protodep -mod=vendor main.go
 
 define build-artifact
 		$(eval GIT_COMMIT := $(shell git describe --tags --always))
@@ -42,6 +42,7 @@ build-all: tidy vendor
 		$(call build-artifact,linux,arm,$(APP))
 		$(call build-artifact,linux,arm64,$(APP))
 		$(call build-artifact,darwin,amd64,$(APP))
+		$(call build-artifact,darwin,arm64,$(APP))
 		$(call build-artifact,windows,amd64,$(APP).exe)
 
 .PHONY: clean
@@ -53,3 +54,8 @@ clean:
 .PHONY: test
 test:
 	go test -v ./...
+
+.PHONY: update-credits
+update-credits:
+	@go install github.com/Songmu/gocredits/cmd/gocredits@latest
+	@gocredits . > CREDITS
