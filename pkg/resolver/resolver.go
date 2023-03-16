@@ -140,6 +140,10 @@ func (s *resolver) Resolve(forceUpdate bool, cleanupCache bool) error {
 				return err
 			}
 
+			if len(protodep.PatchAnnotation) > 0 {
+				content = patchProtoFile(content, filepath.Join(protodep.ProtoOutdir, dep.Path, s.relativeDest), protodep.PatchAnnotation)
+			}
+
 			if err := writeFileWithDirectory(outpath, content, 0644); err != nil {
 				return err
 			}
@@ -158,8 +162,9 @@ func (s *resolver) Resolve(forceUpdate bool, cleanupCache bool) error {
 	}
 
 	newProtodep := config.ProtoDep{
-		ProtoOutdir:  protodep.ProtoOutdir,
-		Dependencies: newdeps,
+		ProtoOutdir:     protodep.ProtoOutdir,
+		PatchAnnotation: protodep.PatchAnnotation,
+		Dependencies:    newdeps,
 	}
 
 	if dep.IsNeedWriteLockFile() {
@@ -234,6 +239,87 @@ func (s *resolver) isMatchPath(protoRootDir string, target string, paths []strin
 	}
 
 	return false
+}
+
+func patchProtoFile(content []byte, filepath string, messageAnnotation string) []byte {
+	if len(content) > 0 {
+		lineSeparator := "\n"
+		dirSeparator := "/"
+		packageSeparator := "."
+		javaPackageLinePrefix := "option java_package"
+		packageLinePrefix := "package "
+		messageLinePrefix := "message "
+		javaClassPrefix := "com."
+		originalPackage := ""
+		totalMessages := 0
+		path := strings.Split(filepath, dirSeparator)
+		formattedPath := strings.Join(path[0:(len(path)-1)], packageSeparator)
+
+		lines := strings.Split(string(content), lineSeparator)
+		// patch package, remember original, count messages
+		for i, line := range lines {
+			relativePath := strings.ReplaceAll(formattedPath, dirSeparator, packageSeparator)
+			if strings.HasPrefix(strings.TrimSpace(line), packageLinePrefix) {
+				originalPackage = eliminateCharIfNeeded(line, ";")
+				lines[i] = fmt.Sprintf("%s%s;", packageLinePrefix, relativePath)
+			} else if strings.HasPrefix(strings.TrimSpace(line), javaPackageLinePrefix) {
+				if !(strings.HasPrefix(relativePath, javaClassPrefix)) {
+					relativePath = javaClassPrefix + relativePath
+				}
+				lines[i] = fmt.Sprintf("%s = \"%s\";", javaPackageLinePrefix, relativePath)
+			} else if strings.HasPrefix(strings.TrimSpace(line), messageLinePrefix) {
+				totalMessages++
+			}
+		}
+
+		if (originalPackage != "") && totalMessages > 0 {
+			// patch messages
+			patchedLines := make([]string, len(lines)+totalMessages)
+			totalLinesPatched := 0
+			nestingLevel := 0
+			originalMessage := ""
+			tab := "    "
+			for _, line := range lines {
+				patchedLines[totalLinesPatched] = line
+				totalLinesPatched++
+				if strings.HasPrefix(strings.TrimSpace(line), messageLinePrefix) {
+					nestingLevel++
+					topLevelMessage := eliminateCharIfNeeded(line, "{")
+					if originalMessage == "" {
+						originalMessage = topLevelMessage
+					} else {
+						originalMessage = originalMessage + packageSeparator + topLevelMessage
+					}
+					patchedLines[totalLinesPatched] = fmt.Sprintf("%soption (%s) = \"%s.%s\";", strings.Repeat(tab, nestingLevel), messageAnnotation, originalPackage, originalMessage)
+					totalLinesPatched++
+				} else if originalMessage != "" && strings.HasSuffix(strings.TrimSpace(line), "}") {
+					nestingLevel--
+					splitNestedMessage := strings.Split(originalMessage, packageSeparator)
+					if len(splitNestedMessage) > 0 {
+						originalMessage = strings.Join(splitNestedMessage[0:len(splitNestedMessage)-1], packageSeparator)
+					} else {
+						originalMessage = ""
+					}
+				}
+			}
+			return []byte(strings.Join(patchedLines, lineSeparator))
+		}
+
+		return []byte(strings.Join(lines, lineSeparator))
+	}
+	return content
+}
+
+// eliminates unwanted chars (should they exist) from the subject of a 2-word-expression
+// "package some.thing ;" => "some.thing"
+// "message msg{" => "msg"
+func eliminateCharIfNeeded(expression string, cutset string) string {
+	splittedByNonWhiteSpace := strings.Split(strings.TrimSpace(expression), " ")
+	subject := splittedByNonWhiteSpace[1]
+	if strings.HasSuffix(subject, cutset) {
+		return subject[0 : len(subject)-len(cutset)]
+	}
+	return subject
 }
 
 func writeToml(dest string, input interface{}) error {

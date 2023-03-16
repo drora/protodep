@@ -98,7 +98,6 @@ func TestSync(t *testing.T) {
 		t.Error("not found file [proto/protodep/hierarchy/fuga/fuga.proto]")
 	}
 
-
 	// fetch
 	err = target.Resolve(false, false)
 	require.NoError(t, err)
@@ -167,4 +166,87 @@ func TestIsAvailableSSH(t *testing.T) {
 	notFound, err := isAvailableSSH(fmt.Sprintf("/tmp/IsAvailableSSH_%d", time.Now().UnixNano()))
 	require.NoError(t, err)
 	require.False(t, notFound)
+}
+
+func TestPatch(t *testing.T) {
+	result := patchProtoFile([]byte(getProtoContent()), "upstream/path/to/proto", ".org.api.derived_from")
+	require.Equal(t, getExpectedProtoContentPatched(), string(result))
+}
+
+func getProtoContent() string {
+	return `
+syntax = "proto3";
+
+package protodep.org.common;
+
+option java_multiple_files = true;
+option java_package = "com.protodep.org.common";
+
+import "google/protobuf/wrappers.proto";
+
+// A common thing
+
+//This Is 2
+message Two {
+    google.protobuf.StringValue one = 1;
+	google.protobuf.IntValue two = 2;
+}
+
+//thr33
+message Three {
+    message Count {
+        uint32 total = 1;
+    }
+    google.protobuf.StringValue one = 1;
+    google.protobuf.IntValue two = 2;
+    Count three = 3;
+}
+
+//This Is The One
+message One {
+    boolean one = 1;
+}
+
+`
+}
+
+func getExpectedProtoContentPatched() string {
+	return `
+syntax = "proto3";
+
+package upstream.path.to;
+
+option java_multiple_files = true;
+option java_package = "com.upstream.path.to";
+
+import "google/protobuf/wrappers.proto";
+
+// A common thing
+
+//This Is 2
+message Two {
+    option (.org.api.derived_from) = "protodep.org.common.Two";
+    google.protobuf.StringValue one = 1;
+	google.protobuf.IntValue two = 2;
+}
+
+//thr33
+message Three {
+    option (.org.api.derived_from) = "protodep.org.common.Three";
+    message Count {
+        option (.org.api.derived_from) = "protodep.org.common.Three.Count";
+        uint32 total = 1;
+    }
+    google.protobuf.StringValue one = 1;
+    google.protobuf.IntValue two = 2;
+    Count three = 3;
+}
+
+//This Is The One
+message One {
+    option (.org.api.derived_from) = "protodep.org.common.One";
+    boolean one = 1;
+}
+
+`
 }

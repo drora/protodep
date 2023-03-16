@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/stormcat24/protodep/session"
 	"os"
 	"strings"
 
@@ -16,6 +17,28 @@ var upCmd = &cobra.Command{
 	Short: "Populate .proto vendors existing protodep.toml and lock",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
+		homeDir, err := homedir.Dir()
+		if err != nil {
+			return err
+		}
+
+		var sessionService = session.New(&session.Config{
+			HomeDir: homeDir,
+		})
+
+		hasSession := len(sessionService.GetUser()) > 0 && len(sessionService.GetToken()) > 0
+		if hasSession {
+			logger.Info("using session credentials for user: %s", sessionService.GetUser())
+		}
+
+		/*	useHttps = true
+			if basicAuthUsername == "" {
+
+			}
+			if basicAuthPassword == "" {
+				basicAuthPassword = sessionService.GetToken()
+			}
+		*/
 		isForceUpdate, err := cmd.Flags().GetBool("force")
 		if err != nil {
 			return err
@@ -46,11 +69,17 @@ var upCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		if hasSession {
+			useHttps = true
+		}
 		logger.Info("use https = %t", useHttps)
 
 		basicAuthUsername, err := cmd.Flags().GetString("basic-auth-username")
 		if err != nil {
 			return err
+		}
+		if hasSession && basicAuthUsername == "" {
+			basicAuthUsername = sessionService.GetUser()
 		}
 		if basicAuthUsername != "" {
 			logger.Info("https basic auth username = %s", basicAuthUsername)
@@ -60,16 +89,14 @@ var upCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		if hasSession && basicAuthPassword == "" {
+			basicAuthPassword = sessionService.GetToken()
+		}
 		if basicAuthPassword != "" {
 			logger.Info("https basic auth password = %s", strings.Repeat("x", len(basicAuthPassword))) // Do not display the password.
 		}
 
 		pwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-
-		homeDir, err := homedir.Dir()
 		if err != nil {
 			return err
 		}
