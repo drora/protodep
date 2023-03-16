@@ -126,10 +126,10 @@ $ protodep up --use-https \
 #### all calls
 if this is how you want to fetch dependencies from now on, instead of running with explicit auth flags each time, you can simply run `protodep login`.  
 this will create a session that will lock on HTTPS mode and remember your credentials going forward.
-```shell
+```
 $ protodep login
 Logging in...
-what's your github user?: drora
+whats your github user?: drora
 
 a personal access token is required to allow protodep access to dependency sources.
 
@@ -142,7 +142,7 @@ personal access token: ****************************************
 OK
 ```
 opt out any time by running `protodep logout` and go back to vanilla mode.
-```shell
+```
 $ protodep logout
 Logging out...
 Bye!
