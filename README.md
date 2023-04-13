@@ -50,7 +50,7 @@ Support as follows:
 * `protodep_linux_arm64.tar.gz`
 
 ```bash
-$ wget https://github.com/drora/protodep/releases/download/0.9.5/protodep_darwin_amd64.tar.gz
+$ wget https://github.com/drora/protodep/releases/download/0.9.6/protodep_darwin_amd64.tar.gz
 $ tar -xf protodep_darwin_amd64.tar.gz
 $ mv protodep /usr/local/bin/
 ```

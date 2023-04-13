@@ -204,6 +204,7 @@ message Three {
 
 //This Is The One
 message One {
+	option (.org.api.derived_from) = "some.other.Ancestor";
     boolean one = 1;
 }
 

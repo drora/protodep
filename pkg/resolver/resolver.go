@@ -252,6 +252,7 @@ func patchProtoFile(content []byte, filepath string, messageAnnotation string) [
 		javaClassPrefix := "com."
 		originalPackage := ""
 		totalMessages := 0
+		totalMessagesAlreadyPatched := 0
 		path := strings.Split(filepath, dirSeparator)
 		formattedPath := strings.Join(path[0:(len(path)-1)], packageSeparator)
 
@@ -269,20 +270,26 @@ func patchProtoFile(content []byte, filepath string, messageAnnotation string) [
 				lines[i] = fmt.Sprintf("%s = \"%s\";", javaPackageLinePrefix, relativePath)
 			} else if strings.HasPrefix(strings.TrimSpace(line), messageLinePrefix) {
 				totalMessages++
+			} else if strings.HasPrefix(strings.TrimSpace(line), fmt.Sprintf("option (%s)", messageAnnotation)) {
+				totalMessagesAlreadyPatched++
 			}
 		}
 
 		if (originalPackage != "") && totalMessages > 0 {
 			// patch messages
-			patchedLines := make([]string, len(lines)+totalMessages)
+			patchedLines := make([]string, len(lines)+totalMessages-totalMessagesAlreadyPatched)
 			totalLinesPatched := 0
 			nestingLevel := 0
 			originalMessage := ""
 			tab := "    "
+			patchInProgress := false
 			for _, line := range lines {
-				patchedLines[totalLinesPatched] = line
-				totalLinesPatched++
+				if !patchInProgress || !strings.HasPrefix(strings.TrimSpace(line), fmt.Sprintf("option (%s)", messageAnnotation)) {
+					patchedLines[totalLinesPatched] = line
+					totalLinesPatched++
+				}
 				if strings.HasPrefix(strings.TrimSpace(line), messageLinePrefix) {
+					patchInProgress = true
 					nestingLevel++
 					topLevelMessage := eliminateCharIfNeeded(line, "{")
 					if originalMessage == "" {
@@ -293,6 +300,7 @@ func patchProtoFile(content []byte, filepath string, messageAnnotation string) [
 					patchedLines[totalLinesPatched] = fmt.Sprintf("%soption (%s) = \"%s.%s\";", strings.Repeat(tab, nestingLevel), messageAnnotation, originalPackage, originalMessage)
 					totalLinesPatched++
 				} else if originalMessage != "" && strings.HasSuffix(strings.TrimSpace(line), "}") {
+					patchInProgress = false
 					nestingLevel--
 					splitNestedMessage := strings.Split(originalMessage, packageSeparator)
 					if len(splitNestedMessage) > 0 {
