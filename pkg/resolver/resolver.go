@@ -282,14 +282,12 @@ func patchProtoFile(content []byte, filepath string, messageAnnotation string) [
 			nestingLevel := 0
 			originalMessage := ""
 			tab := "    "
-			patchInProgress := false
 			for _, line := range lines {
-				if !patchInProgress || !strings.HasPrefix(strings.TrimSpace(line), fmt.Sprintf("option (%s)", messageAnnotation)) {
+				if nestingLevel == 0 || !strings.HasPrefix(strings.TrimSpace(line), fmt.Sprintf("option (%s)", messageAnnotation)) {
 					patchedLines[totalLinesPatched] = line
 					totalLinesPatched++
 				}
 				if strings.HasPrefix(strings.TrimSpace(line), messageLinePrefix) {
-					patchInProgress = true
 					nestingLevel++
 					topLevelMessage := eliminateCharIfNeeded(line, "{")
 					if originalMessage == "" {
@@ -300,7 +298,6 @@ func patchProtoFile(content []byte, filepath string, messageAnnotation string) [
 					patchedLines[totalLinesPatched] = fmt.Sprintf("%soption (%s) = \"%s.%s\";", strings.Repeat(tab, nestingLevel), messageAnnotation, originalPackage, originalMessage)
 					totalLinesPatched++
 				} else if originalMessage != "" && strings.HasSuffix(strings.TrimSpace(line), "}") {
-					patchInProgress = false
 					nestingLevel--
 					splitNestedMessage := strings.Split(originalMessage, packageSeparator)
 					if len(splitNestedMessage) > 0 {
