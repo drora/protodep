@@ -169,7 +169,7 @@ func TestIsAvailableSSH(t *testing.T) {
 }
 
 func TestPatch(t *testing.T) {
-	result := patchProtoFile([]byte(getProtoContent()), "upstream/path/to/proto", ".org.api.derived_from")
+	result := patchProtoFile([]byte(getProtoContent()), "upstream/path/to/proto", ".org.api.derived_from", nil)
 	require.Equal(t, getExpectedProtoContentPatched(), string(result))
 }
 

@@ -141,7 +141,7 @@ func (s *resolver) Resolve(forceUpdate bool, cleanupCache bool) error {
 			}
 
 			if len(protodep.PatchAnnotation) > 0 {
-				content = patchProtoFile(content, filepath.Join(protodep.ProtoOutdir, dep.Path, s.relativeDest), protodep.PatchAnnotation)
+				content = patchProtoFile(content, filepath.Join(protodep.ProtoOutdir, dep.Path, s.relativeDest), protodep.PatchAnnotation, protodep.Dependencies)
 			}
 
 			if err := writeFileWithDirectory(outpath, content, 0644); err != nil {
@@ -241,12 +241,13 @@ func (s *resolver) isMatchPath(protoRootDir string, target string, paths []strin
 	return false
 }
 
-func patchProtoFile(content []byte, filepath string, messageAnnotation string) []byte {
+func patchProtoFile(content []byte, filepath string, messageAnnotation string, sources []config.ProtoDepDependency) []byte {
 	if len(content) > 0 {
 		lineSeparator := "\n"
 		dirSeparator := "/"
 		packageSeparator := "."
 		javaPackageLinePrefix := "option java_package"
+		importLinePrefix := "import "
 		packageLinePrefix := "package "
 		messageLinePrefix := "message "
 		javaClassPrefix := "com."
@@ -283,6 +284,12 @@ func patchProtoFile(content []byte, filepath string, messageAnnotation string) [
 			originalMessage := ""
 			tab := "    "
 			for _, line := range lines {
+				if strings.HasPrefix(strings.TrimSpace(line), importLinePrefix) {
+					targetExists, localTarget := getImportTargetFromRange(line, sources)
+					if targetExists {
+						line = fmt.Sprintf("%s\"%s\";", importLinePrefix, localTarget)
+					}
+				}
 				if nestingLevel == 0 || !strings.HasPrefix(strings.TrimSpace(line), fmt.Sprintf("option (%s)", messageAnnotation)) {
 					patchedLines[totalLinesPatched] = line
 					totalLinesPatched++
@@ -313,6 +320,18 @@ func patchProtoFile(content []byte, filepath string, messageAnnotation string) [
 		return []byte(strings.Join(lines, lineSeparator))
 	}
 	return content
+}
+
+func getImportTargetFromRange(line string, sources []config.ProtoDepDependency) (bool, string) {
+	line = strings.ReplaceAll(line, " ", "")
+	line = strings.Trim(line, "import\"")
+	line = strings.Trim(line, "\";")
+	for _, s := range sources {
+		if strings.Contains(s.Target, line) {
+			return true, s.Path
+		}
+	}
+	return false, ""
 }
 
 // eliminates unwanted chars (should they exist) from the subject of a 2-word-expression
