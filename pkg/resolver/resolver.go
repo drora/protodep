@@ -141,7 +141,7 @@ func (s *resolver) Resolve(forceUpdate bool, cleanupCache bool) error {
 			}
 
 			if len(protodep.PatchAnnotation) > 0 {
-				content = patchProtoFile(content, filepath.Join(protodep.ProtoOutdir, dep.Path, s.relativeDest), protodep.PatchAnnotation, protodep.Dependencies)
+				content = patchProtoFile(content, filepath.Join(protodep.ProtoOutdir, dep.Path, s.relativeDest), protodep.PatchAnnotation, protodep.Dependencies, protodep.ProtoOutdir)
 			}
 
 			if err := writeFileWithDirectory(outpath, content, 0644); err != nil {
@@ -241,7 +241,7 @@ func (s *resolver) isMatchPath(protoRootDir string, target string, paths []strin
 	return false
 }
 
-func patchProtoFile(content []byte, filepath string, messageAnnotation string, sources []config.ProtoDepDependency) []byte {
+func patchProtoFile(content []byte, filepath string, messageAnnotation string, sources []config.ProtoDepDependency, localBaseDir string) []byte {
 	if len(content) > 0 {
 		lineSeparator := "\n"
 		dirSeparator := "/"
@@ -285,7 +285,7 @@ func patchProtoFile(content []byte, filepath string, messageAnnotation string, s
 			tab := "    "
 			for _, line := range lines {
 				if strings.HasPrefix(strings.TrimSpace(line), importLinePrefix) {
-					targetExists, localTarget := getImportTargetFromRange(line, sources)
+					targetExists, localTarget := getImportTargetFromRange(line, sources, localBaseDir)
 					if targetExists {
 						line = fmt.Sprintf("%s\"%s\";", importLinePrefix, localTarget)
 					}
@@ -322,13 +322,13 @@ func patchProtoFile(content []byte, filepath string, messageAnnotation string, s
 	return content
 }
 
-func getImportTargetFromRange(line string, sources []config.ProtoDepDependency) (bool, string) {
+func getImportTargetFromRange(line string, sources []config.ProtoDepDependency, localBaseDir string) (bool, string) {
 	line = strings.ReplaceAll(line, " ", "")
 	line = strings.Trim(line, "import\"")
 	line = strings.Trim(line, "\";")
 	for _, s := range sources {
 		if strings.Contains(s.Target, line) {
-			return true, s.Path
+			return true, fmt.Sprintf("%s/%s", strings.TrimPrefix(localBaseDir, "./"), s.Path)
 		}
 	}
 	return false, ""
