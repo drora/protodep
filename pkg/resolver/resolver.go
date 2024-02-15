@@ -250,6 +250,7 @@ func patchProtoFile(content []byte, filepath string, messageAnnotation string, s
 		importLinePrefix := "import "
 		packageLinePrefix := "package "
 		messageLinePrefix := "message "
+		oneOfLinePrefix := "oneof "
 		javaClassPrefix := "com."
 		originalPackage := ""
 		totalMessages := 0
@@ -283,6 +284,7 @@ func patchProtoFile(content []byte, filepath string, messageAnnotation string, s
 			nestingLevel := 0
 			originalMessage := ""
 			tab := "    "
+			inOneofBlock := false
 			for _, line := range lines {
 				if strings.HasPrefix(strings.TrimSpace(line), importLinePrefix) {
 					targetExists, localTarget := getImportTargetFromRange(line, sources, localBaseDir)
@@ -304,6 +306,10 @@ func patchProtoFile(content []byte, filepath string, messageAnnotation string, s
 					}
 					patchedLines[totalLinesPatched] = fmt.Sprintf("%soption (%s) = \"%s.%s\";", strings.Repeat(tab, nestingLevel), messageAnnotation, originalPackage, originalMessage)
 					totalLinesPatched++
+				} else if strings.HasPrefix(strings.TrimSpace(line), oneOfLinePrefix) {
+					inOneofBlock = true
+				} else if inOneofBlock && strings.HasSuffix(strings.TrimSpace(line), "}") {
+					inOneofBlock = false
 				} else if originalMessage != "" && strings.HasSuffix(strings.TrimSpace(line), "}") {
 					nestingLevel--
 					splitNestedMessage := strings.Split(originalMessage, packageSeparator)
