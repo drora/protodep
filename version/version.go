@@ -6,7 +6,7 @@ import (
 
 const (
 	fork    = "github.com/drora/protodep"
-	version = "0.9.7"
+	version = "0.9.8"
 )
 
 type Info struct {
