@@ -25,6 +25,8 @@ type session struct {
 }
 
 const sessionDataDelimiter = ":"
+const protodepSessionParentDirName = ".protodep"
+const protodepSessionConfigFileName = "config"
 
 var protodepConfigFile string
 
@@ -34,7 +36,7 @@ func New(conf *Config) Session {
 		User:  "",
 		Token: "",
 	}
-	protodepConfigFile = filepath.Join(s.conf.HomeDir, ".protodep/config")
+	protodepConfigFile = filepath.Join(s.conf.HomeDir, protodepSessionParentDirName, protodepSessionConfigFileName)
 
 	if HasSession() {
 		sessionData, err := ReadSessionData()
@@ -168,6 +170,10 @@ func ReadSessionData() (string, error) {
 }
 
 func WriteSessionData(content string) error {
+	dir := filepath.Dir(protodepConfigFile)
+	if err := os.MkdirAll(dir, 0777); err != nil {
+		return fmt.Errorf("create directory %s: %w", dir, err)
+	}
 	f, createErr := os.Create(protodepConfigFile)
 	if createErr != nil {
 		return createErr
