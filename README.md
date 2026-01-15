@@ -112,6 +112,18 @@ Even if `protodep.lock` exists, you can force update dependencies:
 $ protodep up -f
 ```
 
+### Behavior summary: `protodep up` vs `protodep up -f`
+
+| Scenario | `protodep up` | `protodep up -f` |
+|----------|---------------|------------------|
+| New deps added to toml | ✅ Fetched and added to lock | ✅ Fetched and added to lock |
+| Existing deps (in lock) | ✅ Use locked revision | ❌ Re-resolved from branch/tag |
+| Changes to includes/ignores in toml | ❌ Ignored (lock is used) | ✅ Applied |
+
+**When to use each:**
+- `protodep up` — Safe for daily use. Adds new dependencies while preserving locked versions.
+- `protodep up -f` — Use when you want to update all dependencies to their latest versions, or when you've changed includes/ignores for existing dependencies.
+
 ### Getting to private repo dependencies via HTTPS
 
 #### single call

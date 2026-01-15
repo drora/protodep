@@ -9,6 +9,7 @@ require (
 	github.com/go-git/go-git/v5 v5.7.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/mock v1.6.0
+	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-isatty v0.0.19
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v1.7.0
@@ -19,6 +20,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230528122434-6f98819771a1 // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
+	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
