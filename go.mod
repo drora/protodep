@@ -1,4 +1,4 @@
-module github.com/stormcat24/protodep
+module github.com/drora/protodep
 
 go 1.20
 
