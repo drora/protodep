@@ -4,7 +4,7 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 
-	"github.com/stormcat24/protodep/session"
+	"github.com/drora/protodep/session"
 )
 
 var loginCmd = &cobra.Command{

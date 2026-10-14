@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/stormcat24/protodep/cmd"
+	"github.com/drora/protodep/cmd"
 )
 
 func main() {
